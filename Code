@@ -1,0 +1,223 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <limits>
+#include <iomanip>
+
+class BankAccount {
+private:
+    std::string accountNumber;
+    std::string accountHolderName;
+    double balance;
+
+public:
+    BankAccount() {
+        accountNumber = "0000";
+        accountHolderName = "Unknown";
+        balance = 0.0;
+    }
+
+    BankAccount(std::string num, std::string name, double initialBalance) {
+        accountNumber = num;
+        accountHolderName = name;
+        balance = (initialBalance >= 0.0) ? initialBalance : 0.0;
+    }
+
+    std::string getAccountNumber() const { return accountNumber; }
+    std::string getAccountHolderName() const { return accountHolderName; }
+    double getBalance() const { return balance; }
+
+    void setAccountHolderName(std::string name) {
+        if (!name.empty()) {
+            accountHolderName = name;
+        }
+    }
+
+    void deposit(double amount) {
+        if (amount > 0) {
+            balance += amount;
+            std::cout << "Successfully deposited $" << std::fixed << std::setprecision(2) << amount << "\n";
+        } else {
+            std::cout << "Invalid deposit amount. Amount must be positive.\n";
+        }
+    }
+
+    bool withdraw(double amount) {
+        if (amount <= 0) {
+            std::cout << "Invalid withdrawal amount. Amount must be positive.\n";
+            return false;
+        }
+        if (amount > balance) {
+            std::cout << "Transaction failed: Insufficient funds.\n";
+            return false;
+        }
+        balance -= amount;
+        std::cout << "Successfully withdrew $" << std::fixed << std::setprecision(2) << amount << "\n";
+        return true;
+    }
+
+    void displayAccountInfo() const {
+        std::cout << "Acc #: " << accountNumber
+                  << " | Holder: " << accountHolderName
+                  << " | Balance: $" << std::fixed << std::setprecision(2) << balance << "\n";
+    }
+};
+
+void clearInputStream() {
+    std::cin.clear();
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+}
+
+int getValidatedChoice() {
+    int choice;
+    while (!(std::cin >> choice)) {
+        std::cout << "Invalid input. Please enter a number: ";
+        clearInputStream();
+    }
+    clearInputStream();
+    return choice;
+}
+
+double getValidatedAmount() {
+    double amount;
+    while (!(std::cin >> amount)) {
+        std::cout << "Invalid amount. Please enter a valid decimal number: ";
+        clearInputStream();
+    }
+    clearInputStream();
+    return amount;
+}
+
+BankAccount* findAccount(std::vector<BankAccount>& accounts, const std::string& num) {
+    for (size_t i = 0; i < accounts.size(); ++i) {
+        if (accounts[i].getAccountNumber() == num) {
+            return &accounts[i];
+        }
+    }
+    return nullptr;
+}
+
+int main() {
+    std::vector<BankAccount> bankSystem;
+    int choice = 0;
+
+    bankSystem.push_back(BankAccount("1001", "Alice Smith", 500.00));
+    bankSystem.push_back(BankAccount("1002", "Bob Jones", 1250.50));
+
+    std::cout << "=== Welcome to the Bank Account Management System ===\n";
+
+    do {
+        std::cout << "\n-----------------------------\n";
+        std::cout << "1. Create New Account\n";
+        std::cout << "2. Deposit Funds\n";
+        std::cout << "3. Withdraw Funds\n";
+        std::cout << "4. Modify Account Holder Name\n";
+        std::cout << "5. View Specific Account\n";
+        std::cout << "6. List All Accounts\n";
+        std::cout << "7. Exit\n";
+        std::cout << "Enter your selection (1-7): ";
+
+        choice = getValidatedChoice();
+        std::cout << "-----------------------------\n\n";
+
+        if (choice == 1) {
+            std::string num, name;
+            double initialBalance;
+
+            std::cout << "Enter new account number: ";
+            std::getline(std::cin, num);
+
+            if (findAccount(bankSystem, num) != nullptr) {
+                std::cout << "Error: An account with number " << num << " already exists.\n";
+                continue;
+            }
+
+            std::cout << "Enter account holder full name: ";
+            std::getline(std::cin, name);
+
+            std::cout << "Enter initial deposit balance: $";
+            initialBalance = getValidatedAmount();
+
+            bankSystem.push_back(BankAccount(num, name, initialBalance));
+            std::cout << "Account created successfully!\n";
+
+        } else if (choice == 2) {
+            std::string num;
+            std::cout << "Enter account number for deposit: ";
+            std::getline(std::cin, num);
+
+            BankAccount* account = findAccount(bankSystem, num);
+            if (account != nullptr) {
+                std::cout << "Current Account Details: ";
+                account->displayAccountInfo();
+                std::cout << "Enter deposit amount: $";
+                double amount = getValidatedAmount();
+                account->deposit(amount);
+            } else {
+                std::cout << "Account not found.\n";
+            }
+
+        } else if (choice == 3) {
+            std::string num;
+            std::cout << "Enter account number for withdrawal: ";
+            std::getline(std::cin, num);
+
+            BankAccount* account = findAccount(bankSystem, num);
+            if (account != nullptr) {
+                std::cout << "Current Account Details: ";
+                account->displayAccountInfo();
+                std::cout << "Enter withdrawal amount: $";
+                double amount = getValidatedAmount();
+                account->withdraw(amount);
+            } else {
+                std::cout << "Account not found.\n";
+            }
+
+        } else if (choice == 4) {
+            std::string num, newName;
+            std::cout << "Enter account number to modify: ";
+            std::getline(std::cin, num);
+
+            BankAccount* account = findAccount(bankSystem, num);
+            if (account != nullptr) {
+                std::cout << "Enter new name for account holder: ";
+                std::getline(std::cin, newName);
+                account->setAccountHolderName(newName);
+                std::cout << "Name updated successfully.\n";
+            } else {
+                std::cout << "Account not found.\n";
+            }
+
+        } else if (choice == 5) {
+            std::string num;
+            std::cout << "Enter account number to view: ";
+            std::getline(std::cin, num);
+
+            BankAccount* account = findAccount(bankSystem, num);
+            if (account != nullptr) {
+                std::cout << "\n--- Account Details ---\n";
+                account->displayAccountInfo();
+            } else {
+                std::cout << "Account not found.\n";
+            }
+
+        } else if (choice == 6) {
+            if (bankSystem.empty()) {
+                std::cout << "No bank accounts currently exist in the system.\n";
+            } else {
+                std::cout << "\n=== Current Account Registry ===\n";
+                for (size_t i = 0; i < bankSystem.size(); ++i) {
+                    bankSystem[i].displayAccountInfo();
+                }
+            }
+
+        } else if (choice == 7) {
+            std::cout << "Exiting Bank Management System. Goodbye!\n";
+        } else {
+            std::cout << "Invalid menu item choice. Please select options 1-7.\n";
+        }
+
+    } while (choice != 7);
+
+    return 0;
+}
